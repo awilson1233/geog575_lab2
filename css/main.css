@@ -1,3 +1,6 @@
+*, *:before {
+  box-sizing: border-box;
+}
 .states {
     fill: #FFF;
     stroke: #CCC;
@@ -9,7 +12,7 @@
     stroke-width: 1px;
 }
 .gratBackground {
-    fill: #A9A9A9;
+    fill: #ADD8E6;
 }
 
 .counties {
@@ -58,8 +61,8 @@
 }
 .dropdown {
     position: absolute;
-    top: 30px;
-    left: 40px;
+    top: 160px;
+    left: 45px;
     z-index: 10;
     font-family: sans-serif;
     font-size: 1em;
@@ -69,12 +72,12 @@
     box-shadow: 2px 2px 4px #999;
 }
 
-option {
+.option {
     font-weight: normal;
 }
 .infolabel {
     position: absolute;
-    height: 50px;
+    height: 75px;
     min-width: 100px;
     color: #fff;
     background-color: #000;
@@ -83,7 +86,7 @@ option {
 }
 .infolabel {
     position: absolute;
-    height: 50px;
+    height: 100px;
     min-width: 100px;
     color: #fff;
     background-color: #000;

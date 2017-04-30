@@ -371,6 +371,7 @@ function updateChart(bars, n, colorScale){
             return i * (chartInnerWidth / n) + leftPadding;
         })
         //size/resize bars
+        //console.log(expressed); CMS: YOU CAN'T PUT THIS IN THE MIDDLE OF A BLOCK; CAUSES SYNTAX ERROR
         .attr("height", function(d, i){
             return 104616 - yScale(parseFloat(d[expressed]));
         })
@@ -383,12 +384,28 @@ function updateChart(bars, n, colorScale){
         });
 
  var chartTitle = d3.select(".chartTitle")
+        //CMS: expressed is a string, so expressed[3] is just the fourth letter in the string
+        //format with spaces
+        //use string methods to format variable name correctly (see list of methods on W3Schools)
         .text("Number of" + expressed[3] + "graduates in each county")
 };
 
 //function to highlight enumeration units and bars
 function highlight(props){
+    //console.log(props);
     //change stroke
+
+    //CMS: highlighting only works when you hover over the states because the props object for
+    //the bars (the CSV data) uses COUNTY instead of NAME as the key for that field.
+    //I recommend changing the CSV to use NAME for the field name; if you do this, also change
+    //the csv key used in joinData().
+
+    //Another problem is that the counties with two-word names (e.g., "Los Angeles") won't highlight
+    //because the DOM treats those as two separate class names, so the selector below doesn't work
+    //on them. You need to use props.NAME.replace(/ /g, '-') to replace the spaces with - characters
+    //below and everywhere you either assign the class name (look for .attr("class", props.NAME)
+    //in your code) and use it in a selector (as below).
+
     var selected = d3.selectAll("." + props.NAME)
         .style("stroke", "blue")
         .style("stroke-width", "2");
@@ -423,6 +440,14 @@ d3.select(".infolabel")
 
 function setLabel(props){
     //label content
+
+    //CMS: For label formatting, give your <h1> element below a class name 
+    //(e.g., <h1 class='labelval'>) and access that class name in main.css to assign the element 
+    //{margin: 0} as a style. Increase the label height in main.css. 
+    //Your label id is currently undefined_label because the csv data uses COUNTY instead of NAME
+    //as the variable name. See my other comments about using .replace() to catch counties with
+    //two-word names.
+
     var labelAttribute = "<h1>" + props[expressed] +
         "</h1><b>" + expressed + "</b>";
 
