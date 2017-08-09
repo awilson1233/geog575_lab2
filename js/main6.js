@@ -1,8 +1,8 @@
 //First line of main.js...wrap everything in a self-executing anonymous function to move to local scope
 (function(){
 
-  var attrArray = ["Hispanic", "American Indian", "Asian", "Pacific Islander", "Filipino", "African American", "White", "Two or More Races", "Not Reported", "Total", "Population", "Population Density", "Per Capita Income", "Median Income", "Median Family Income"];
-  var expressed = attrArray[1]; //initial attribute
+  var attrArray = ["ID", "State", "Pcode1", "County", "Pcode2", "Mid 2016 Population", "Mid 2017 Population", "CCCM", "EDUCATION", "FSL", "HEALTH", "NUTRITION", "PROTECTION", "SHELTER & NFIs", "WASH", "Total People In Need"];
+  var expressed = attrArray[6]; //initial attribute
 
 var chartWidth = window.innerWidth * 0.425,
     chartHeight = 473,
@@ -28,54 +28,54 @@ function setMap(){
 
     var width = window.innerWidth * 0.5,
         height = 460;
-
-    //create new svg container for the map
+    //
+    // //create new svg container for the map
     var map = d3.select("body")
         .append("svg")
         .attr("class", "map")
         .attr("width", width)
         .attr("height", height);
-
-    //create Albers equal area conic projection centered on CA
+    //
+    // //create Albers equal area conic projection centered on CA
     var projection = d3.geoAlbers()
         .scale(2100)
         .rotate([45, 45, 5])
         .parallels([32.25, 42])
         .center([-119.35, 22.965])
         .translate([width / 25, height / 25]);
-
+    //
     var path = d3.geoPath()
        .projection(projection);
 
     d3.queue()
-        .defer(d3.csv, "data/gradrates_bycounty2.csv") //load attributes from csv
-        .defer(d3.json, "data/unitedstates.topojson") //load background spatial data
-        .defer(d3.json, "data/CA_counties.topojson") //load choropleth spatial data
+        .defer(d3.csv, "data/need.csv") //load attributes from csv
+        .defer(d3.json, "data/admin2.topojson") //load background spatial data
+        // .defer(d3.json, "data/CA_counties.topojson") //load choropleth spatial data
         .await(callback);
 
-    function callback(error, csvData, usa, counties){
+    function callback(error, csvData, admin){
 
       //place graticule on the map
       setGraticule(map, path);
 
       //translate usa and counties TopoJSONs
-      var unitedStates = topojson.feature(usa, usa.objects.unitedstates)
-      var caCounties = topojson.feature(counties, counties.objects.CA_counties).features;
+      var admin2 = topojson.feature(admin, admin.objects.admin2)
+      // var caCounties = topojson.feature(counties, counties.objects.CA_counties).features;
 
       //add USA boundary to map
       var states = map.append("path")
-          .datum(unitedStates)
+          .datum(admin2)
           .attr("class", "states")
           .attr("d", path);
 
       //join csv data to GeoJSON enumeration units
-      caCounties = joinData(caCounties, csvData);
+      admin2 = joinData(admin2, csvData);
 
       //create the color scale
       var colorScale = makeColorScale(csvData);
 
       //add enumeration units to the map
-      setEnumerationUnits(caCounties, map, path, colorScale);
+      setEnumerationUnits(admin2, map, path, colorScale);
 
       //add coordinated visualization to the map
       setChart (csvData, colorScale);
@@ -107,25 +107,25 @@ function setGraticule(map, path){
 
 };
 
-function joinData(caCounties, csvData){
+function joinData(admin2, csvData){
 
       //loop through csv to assign each set of csv attribute values to geojson region
       for (var i=0; i<csvData.length; i++){
-          var csvCounty = csvData[i]; //the current county
-          var csvKey = csvCounty.NAME; //the CSV primary key
+          var csvState = csvData[i]; //the current state
+          var csvKey = csvState.State; //the CSV primary key
 
           //loop through geojson regions to find correct region
-          for (var a=0; a<caCounties.length; a++){
+          for (var a=0; a<admin2.length; a++){
 
-              var geojsonProps = caCounties[a].properties; //the current region geojson properties
-              var geojsonKey = geojsonProps.NAME; //the geojson primary key
+              var geojsonProps = admin2[a].properties; //the current region geojson properties
+              var geojsonKey = geojsonProps.ADMIN2; //the geojson primary key
 
               //where primary keys match, transfer csv data to geojson properties object
               if (geojsonKey == csvKey){
 
                   //assign all attributes and values
                   attrArray.forEach(function(attr){
-                      var val = parseFloat(csvCounty[attr]); //get csv attribute value
+                      var val = parseFloat(csvState[attr]); //get csv attribute value
                       geojsonProps[attr] = val; //assign attribute and value to geojson properties
                   });
               };
@@ -133,18 +133,18 @@ function joinData(caCounties, csvData){
       };
 
 
-      return caCounties;
+      return admin2;
 };
-
-function setEnumerationUnits(caCounties, map, path, colorScale){
+//
+function setEnumerationUnits(admin2, map, path, colorScale){
 
   //add counties to map
   var counties = map.selectAll(".counties")
-      .data(caCounties)
+      .data(admin2)
       .enter()
       .append("path")
       .attr("class", function(d){
-          return "counties " + d.properties.NAME;
+          return "State " + d.properties.States;
       })
       .attr("d", path)
       .style("fill", function(d){
@@ -164,8 +164,8 @@ function setEnumerationUnits(caCounties, map, path, colorScale){
 
 
 };
-
-//function to create color scale generator
+//
+// //function to create color scale generator
 function makeColorScale(data){
     var colorClasses = [
         "#ffffb2",
@@ -200,9 +200,9 @@ function makeColorScale(data){
 
     return colorScale;
 };
-
-
-//function to test for data value and return color
+//
+//
+// //function to test for data value and return color
 function choropleth(props, colorScale){
     //make sure attribute value is a number
     var val = parseFloat(props[expressed]);
@@ -214,7 +214,7 @@ function choropleth(props, colorScale){
     };
 };
 
-//function to create coordinated bar chart
+// //function to create coordinated bar chart
 function setChart(csvData, colorScale){
 
     //create a second svg element to hold the bar chart
@@ -272,7 +272,7 @@ function setChart(csvData, colorScale){
         .attr("x", 40)
         .attr("y", 40)
         .attr("class", "chartTitle")
-        .text("Number of Graduates " + expressed[3] + " in each county");
+        .text("Number of people in need " + expressed[3]);
 
     //create vertical axis generator
     var yAxis = d3.axisLeft()
@@ -294,8 +294,8 @@ function setChart(csvData, colorScale){
     updateChart(bars, csvData.length, colorScale);
 
 };
-
-//function to create a dropdown menu for attribute selection
+//
+// //function to create a dropdown menu for attribute selection
 function createDropdown(csvData){
     //add select element
     var dropdown = d3.select("body")
@@ -319,8 +319,8 @@ function createDropdown(csvData){
         .attr("value", function(d){ return d })
         .text(function(d){ return d });
 };
-
-//dropdown change listener handler
+//
+// //dropdown change listener handler
 function changeAttribute(attribute, csvData, colorScale){
     //change the expressed attribute
     expressed = attribute;
@@ -359,8 +359,8 @@ function changeAttribute(attribute, csvData, colorScale){
 
     updateChart(bars, csvData.length, colorScale);
 }; //end of changeAttribute()
-
-//function to position, size, and color bars in chart
+//
+// //function to position, size, and color bars in chart
 function updateChart(bars, n, colorScale){
     //position bars
 
@@ -392,34 +392,34 @@ function updateChart(bars, n, colorScale){
         //CMS: expressed is a string, so expressed[3] is just the fourth letter in the string
         //format with spaces
         //use string methods to format variable name correctly (see list of methods on W3Schools)
-        .text("Number of " + expressed + " graduates in each county")
+        .text("Number of people in need" + expressed )
 };
-
-//function to highlight enumeration units and bars
+//
+// //function to highlight enumeration units and bars
 function highlight(props){
     //console.log(props);
     //change stroke
-
-    //CMS: highlighting only works when you hover over the states because the props object for
-    //the bars (the CSV data) uses COUNTY instead of NAME as the key for that field.
-    //I recommend changing the CSV to use NAME for the field name; if you do this, also change
-    //the csv key used in joinData().
-
-    //Another problem is that the counties with two-word names (e.g., "Los Angeles") won't highlight
-    //because the DOM treats those as two separate class names, so the selector below doesn't work
-    //on them. You need to use props.NAME.replace(/ /g, '-') to replace the spaces with - characters
-    //below and everywhere you either assign the class name (look for .attr("class", props.NAME)
-    //in your code) and use it in a selector (as below).
-
-    var selected = d3.selectAll("." + props.NAME)
+//
+//     //CMS: highlighting only works when you hover over the states because the props object for
+//     //the bars (the CSV data) uses COUNTY instead of NAME as the key for that field.
+//     //I recommend changing the CSV to use NAME for the field name; if you do this, also change
+//     //the csv key used in joinData().
+//
+//     //Another problem is that the counties with two-word names (e.g., "Los Angeles") won't highlight
+//     //because the DOM treats those as two separate class names, so the selector below doesn't work
+//     //on them. You need to use props.NAME.replace(/ /g, '-') to replace the spaces with - characters
+//     //below and everywhere you either assign the class name (look for .attr("class", props.NAME)
+//     //in your code) and use it in a selector (as below).
+//
+    var selected = d3.selectAll("." + props.State)
         .style("stroke", "blue")
         .style("stroke-width", "2");
 
         setLabel(props);
 
 };
-
-//function to reset the element style on mouseout
+//
+// //function to reset the element style on mouseout
 function dehighlight(props){
     var selected = d3.selectAll("." + props.NAME)
         .style("stroke", function(){
@@ -443,34 +443,34 @@ function dehighlight(props){
             .remove();
 };
 
-
-
+//
+//
 function setLabel(props){
     //label content
-
-    //CMS: For label formatting, give your <h1> element below a class name
-    //(e.g., <h1 class='labelval'>) and access that class name in main.css to assign the element
-    //{margin: 0} as a style. Increase the label height in main.css.
-    //Your label id is currently undefined_label because the csv data uses COUNTY instead of NAME
-    //as the variable name. See my other comments about using .replace() to catch counties with
-    //two-word names.
-
+//
+//     //CMS: For label formatting, give your <h1> element below a class name
+//     //(e.g., <h1 class='labelval'>) and access that class name in main.css to assign the element
+//     //{margin: 0} as a style. Increase the label height in main.css.
+//     //Your label id is currently undefined_label because the csv data uses COUNTY instead of NAME
+//     //as the variable name. See my other comments about using .replace() to catch counties with
+//     //two-word names.
+//
     var labelAttribute = "<h1>" + props[expressed] +
-        "</h1><b>" + props.NAME + "</b>";
+        "</h1><b>" + props.State + "</b>";
 
     //create info label div
     var infolabel = d3.select("body")
         .append("div")
         .attr("class", "infolabel")
-        .attr("id", props.NAME + "_label")
+        .attr("id", props.State + "_label")
         .html(labelAttribute);
 
-    var countyName = infolabel.append("div")
+    var stateName = infolabel.append("div")
         .attr("class", "labelname")
-        .html(props.name);
+        .html(props.State);
 };
-
-//function to move info label with mouse
+//
+// //function to move info label with mouse
 function moveLabel(){
     //get width of label
     var labelWidth = d3.select(".infolabel")
@@ -493,5 +493,5 @@ function moveLabel(){
         .style("left", x + "px")
         .style("top", y + "px");
 };
-
+//
 })(); //last line of main.js
